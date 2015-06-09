@@ -14,6 +14,12 @@ module.exports = function(grunt) {
         },
         src: ['node_modules/jison/lib/cli.js']
       },
+      handlebarsparser: {
+        options: {
+          args: ['src/handlebars/handlebars.y', 'src/handlebars/handlebars.l', '--outfile', 'src/handlebars/handlebars-parser.js']
+        },
+        src: ['node_modules/jison/lib/cli.js']
+      },
     },
     jshint: {
       files: [ 'src/*.js' ],
@@ -85,7 +91,8 @@ module.exports = function(grunt) {
             'src/html-decoder/gen/*.js',
             'src/html-decoder/polyfills/*.js',
             'src/polyfills/browser.js',
-            'src/polyfills/minimal.js'
+            'src/polyfills/minimal.js',
+            'src/handlebars/handlebars-parser.js'
           ],
           coverage: true,
           check: {
