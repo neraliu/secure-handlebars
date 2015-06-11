@@ -9,6 +9,39 @@ var handlebarsUtils = require('../src/handlebars-utils'),
     cssParser = require('../src/css-parser/css-parser'),
     cssParserUtils = require('../src/css-utils');
 
+// for customized handlebars parser with the same grammar and lexical definition
+var expressionParserTestPatterns = [
+
+    // html
+    { syntax: 'abc', result: [ { type: 'html', content: 'abc', startPos: 0 } ] },
+
+    // rawblock
+    { syntax: '{{{{rawblock}}}} inside {{{{/rawblock}}}}', 
+        result: [ 
+            { type: 'rawblock', content: '{{{{rawblock}}}} inside {{{{/rawblock}}}}', startPos: 0 } 
+        ] },
+    // the parser does not guard against this
+    { syntax: '{{{{rawblock1}}}} inside {{{{/rawblock2}}}}', 
+        result: [ 
+            { type: 'rawblock', content: '{{{{rawblock1}}}} inside {{{{/rawblock2}}}}', startPos: 0 } 
+        ] },
+    { syntax: 'outside {{{{rawblock}}}} inside {{{{/rawblock}}}}', 
+        result: [ 
+            { type: 'html', content: 'outside ', startPos: 0 },
+            { type: 'rawblock', content: '{{{{rawblock}}}} inside {{{{/rawblock}}}}', startPos: 0 } 
+        ] },
+
+    // partial
+    { syntax: '{{>partial}}', result: [ { type: 'expression', content: '{{>partial}}', startPos: 0 } ] },
+
+    // raw expression 
+    { syntax: '{{{rawexpression}}}', result: [ { type: 'rawexpression', content: '{{{rawexpression}}}', startPos: 0 } ] },
+
+    // escape expression 
+    { syntax: '{{expression}}', result: [ { type: 'escapeexpression', content: '{{expression}}', startPos: 0 } ] },
+];
+exports.expressionParserTestPatterns = expressionParserTestPatterns;
+
 // for handlebars-3.0-spec test only
 var expressionTestPatterns = [
     // valid syntax
@@ -815,7 +848,8 @@ var filterTemplatePatterns = [
                   /{{{yavu \(yceu color7\)}}}/,
 
                   // url
-                  /{{{yubl \(yavd \(yceuu url4\)\)}}}/,
+                  // /{{{yubl \(yavd \(yceuu url4\)\)}}}/,
+                  /{{{y url4}}}/,
                   /{{{yubl \(yavd \(yceus url5\)\)}}}/,
                   /{{{yubl \(yavs \(yceud url6\)\)}}}/,
                   /{{{yubl \(yavd \(yceuu url7\)\)}}}/,
@@ -1294,7 +1328,7 @@ var cssStyleAttributeValuePatterns2 = [
     // <div style='background: url({{xxx}})'>
     // BAD_URI
     { css: 'background: url(',        result: [ { type: cssParserUtils.STYLE_ATTRIBUTE_URL_UNQUOTED, key: 'background', value: 'url(' } ] },
-    { css: 'background: UrL(',        result: [ { type: cssParserUtils.STYLE_ATTRIBUTE_URL_UNQUOTED, key: 'background', value: 'UrL(' } ] },
+    { css: 'background: UrL(',        result: [ { type: cssParserUtils.STYLE_ATTRIBUTE_ERROR } ] },
     { css: 'background: url(    ',    result: [ { type: cssParserUtils.STYLE_ATTRIBUTE_URL_UNQUOTED, key: 'background', value: 'url(    ' } ] },
     // BAD_URI + BAD_STRING
     { css: "background: url('",       result: [ { type: cssParserUtils.STYLE_ATTRIBUTE_URL_SINGLE_QUOTED, key: 'background', value: "url('" } ] },

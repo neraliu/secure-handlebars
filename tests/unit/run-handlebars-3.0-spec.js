@@ -12,6 +12,7 @@ Authors: Nera Liu <neraliu@yahoo-inc.com>
     mocha = require("mocha");
     var expect = require('chai').expect,
         testPatterns = require('../test-patterns.js'),
+        handlebarsParser = require('../../src/handlebars/handlebars-parser.js'),
         handlebars = require('handlebars');
 
     describe("Handlebars 3.0 Parsing Test Suite", function() {
