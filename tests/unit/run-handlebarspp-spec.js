@@ -65,11 +65,26 @@ Authors: Nera Liu <neraliu@yahoo-inc.com>
             });
         });
 
+        /* partial tests */
+        testPatterns.partialPatterns.forEach(function(testObj) {
+            it(testObj.title, function(done) {
+                var exec = promise.promisify(require("child_process").exec);
+                exec('./bin/handlebarspp '+testObj.file+' -e .hbs -p tests/samples/files/partials -c '+testObj.combine)
+                .timeout(300)
+                .done(function(e){
+                    testObj.result.forEach(function(r) {
+                        expect(e.toString()).to.match(r);
+                    });
+                    done();
+                });
+            });
+        });
+
         /* exception tests */
         testPatterns.exceptionPatterns.forEach(function(testObj) {
             it(testObj.title, function(done) {
                 var exec = promise.promisify(require("child_process").exec);
-                exec('./bin/handlebarspp '+testObj.file+' '+testObj.strictMode)
+                exec('./bin/handlebarspp '+testObj.file+' -s '+testObj.strictMode)
                 .timeout(300)
                 .catch(function(e){
                     testObj.result.forEach(function(r) {

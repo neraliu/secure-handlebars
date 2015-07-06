@@ -774,6 +774,22 @@ var templatePatterns = [
 ];
 exports.templatePatterns = templatePatterns;
 
+var partialPatterns = [
+    {
+        title: './bin/handlebarspp partial handling test',
+        file: 'tests/samples/files/handlebarsjs_template_include_partials.hbs',
+        combine: true,
+        result: [ /{{{y insidepartial}}}/ ]
+    },
+    {
+        title: './bin/handlebarspp partial handling with template generation test',
+        file: 'tests/samples/files/handlebarsjs_template_include_partials.hbs',
+        combine: false,
+        result: [ /{{> handlebarsjs_template_partial-6}}/ ]
+    },
+];
+exports.partialPatterns = partialPatterns;
+
 var filterTemplatePatterns = [
     {
         title: './bin/handlebarspp data state template filter test',

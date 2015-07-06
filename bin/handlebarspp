@@ -16,24 +16,45 @@ This utility parses the handlebars template file and adds the context-sensitive 
     var fs = require('fs'),
         ContextParserHandlebars = require("../src/context-parser-handlebars.js"),
         noOfArgs = process.argv.length, 
-        file;
+        file, partialsDir, extname;
+
+    // TODO: update the README
+    var argv = require('minimist')(process.argv.slice(2));
         
-    if (noOfArgs >= 3 && noOfArgs <= 4) {
-        file = process.argv[2];
+    if (argv['_'][0]) {
+        file = argv['_'][0];
+        partialsDir = argv['p'] !== undefined? (argv['p'].charAt(argv['p'].length-1) !== '/'? argv['p']+'/':argv['p']) : undefined;
+        extname = argv['e'] !== undefined? (argv['e'].charAt(0) !== '.'? '.'+argv['e']:argv['e']) : undefined;
+        if (partialsDir && !extname) {
+            console.log("[ERROR] Handlebars file extension (.i.e -e option) is required if partials dir is set!");
+            process.exit(1);
+        }
+
         if (fs.existsSync(file)) {
+            var template = fs.readFileSync(file, 'utf-8');
             var parser = new ContextParserHandlebars({
                 printCharEnable: true,
-                strictMode: process.argv[3] === 'true'
+                strictMode: argv['s'] === 'true',
+                enablePartialCombine: argv['c'] === 'true',
             });
-            var template = fs.readFileSync(file, 'utf-8');
-            parser.analyzeContext(template);
-            process.exit(0);
+
+            // this function will read all the partials and cache into memory,
+            // the partial parsing will be supported if the partial can be loaded from memory
+            // otherwise this partial parsing will be disable by default.
+            var p = parser.getPartials(partialsDir, extname);
+            p.then(function() {
+                parser.analyzeContext(template);
+                process.exit(0);
+            }).catch(function(err) {
+                console.log("[ERROR] "+err);
+                process.exit(1);
+            });
         } else {
             console.log("[ERROR] "+file+" does not exist");
             process.exit(1);
         }
     } else {
-        console.log("Usage: handlebarspp <Handlebars template file> [strictMode true|false]");
+        console.log("Usage: handlebarspp <Handlebars template file> -p <Handlebars partial dir> -e <Handlebars file extension> -s [strictMode true|false] -c [partialCombine true|false]");
         process.exit(1);
     }
 

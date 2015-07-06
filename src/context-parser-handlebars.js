@@ -23,6 +23,11 @@ var HtmlDecoder = require("html-decoder");
 
 var filterMap = handlebarsUtils.filterMap;
 
+var fs = require('fs'),
+    path = require('path'),
+    glob = require('glob'),
+    Promise = require('promise');
+
 // extracted from xss-filters
 /*
 ['^(?:',
@@ -76,12 +81,18 @@ function ContextParserHandlebars(config) {
     /* the flag is used to strict mode of handling un-handled state, defaulted to false */
     this._config._strictMode = (config.strictMode === true);
 
+    /* the flags are used to set the partial handling */
+    this._config._enablePartialCombine = (config.enablePartialCombine !== false);
+
     /* save the char/line no being processed */
     this._charNo = 0;
     this._lineNo = 1;
 
     /* context parser for HTML5 parsing */
     this.contextParser = parserUtils.getParser();
+
+    /* internal file cache */
+    this._partialsCache = Object.create(null);
 }
 
 /**
@@ -401,8 +412,51 @@ ContextParserHandlebars.prototype.analyzeAst = function(ast, contextParser, char
 
                 output += t.output;
 
+            } else if (node.type === handlebarsUtils.PARTIAL_EXPRESSION) {
+
+                // if the 'partial expression' is not in Data State,
+                // TODO: we support basic partial only, need to enhance it.
+                // http://handlebarsjs.com/partials.html
+
+                if (parser.getCurrentState() !== stateMachine.State.STATE_DATA) {
+                    var re = handlebarsUtils.isValidExpression(node.content, 0, handlebarsUtils.PARTIAL_EXPRESSION),
+                        partialName, enterState, partialOutput, partialContent;
+                    if (re && this._partialsCache[re.tag]) {
+                        partialName = re.tag;
+                        partialContent = this._partialsCache[partialName];
+                        var partialParser = new ContextParserHandlebars({
+                                                     printCharEnable: false,
+                                                     enablePartialCombine: this._config._enablePartialCombine,
+                                                     strictMode: this._config._strictMode});
+
+                        // clone the state of the current context parser
+                        enterState = parser.getLastState();
+                        partialParser.contextParser.cloneStates(parser);
+                        partialParser.analyzeContext(partialContent);
+                        // propagate the state of the partial parser to current context parser
+                        parser.cloneStates(partialParser.contextParser);
+
+                        partialOutput = partialParser.getOutput();
+                        if (this._config._enablePartialCombine) {
+                            output += partialOutput;
+                        } else {
+                            var o = node.content,
+                                newPartialName = partialName + "-" + enterState;
+                            o = o.replace(partialName, newPartialName);
+                            output += o;
+                            this._partialsCache[newPartialName] = partialOutput;
+                        }
+                    } else {
+                        output += node.content;
+                        msg = (this._config._strictMode? '[ERROR]' : '[WARNING]') + " SecureHandlebars: " + node.content + ' is in non-HTML Context!';
+                        exceptionObj = new ContextParserHandlebarsException(msg, this._lineNo, this._charNo);
+                        handlebarsUtils.handleError(exceptionObj, this._config._strictMode);
+                    }
+                } else {
+                    output += node.content;
+                }
+
             } else if (node.type === handlebarsUtils.RAW_BLOCK ||
-                node.type === handlebarsUtils.PARTIAL_EXPRESSION ||
                 node.type === handlebarsUtils.AMPERSAND_EXPRESSION) {
 
                 // if the 'rawblock', 'partial expression' and 'ampersand expression' are not in Data State, 
@@ -887,6 +941,54 @@ ContextParserHandlebars.prototype.handleRawBlock = function(input, i, saveToBuff
         }
     }
     throw "[ERROR] SecureHandlebars: Parsing error! Cannot encounter '}}}}' close brace of raw block.";
+};
+
+/**
+* @function ContextParserHandlebars.getPartials
+*
+* @description
+* Get all the partials and load into the memory.
+* This function call is inspired by express-handlebars.
+*/
+ContextParserHandlebars.prototype.getPartials = function(dirPath, extname) {
+    var cache = this._partialsCache,
+        pattern = dirPath + '*' + extname;
+
+    var globPromoise = new Promise(function (resolve, reject) {
+        glob(pattern, {
+            follow: true
+        }, function (err, files) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(files);
+            }
+        });
+    }).then(function(files) {
+        var partialPromises = files.map(function(file) {
+            return new Promise(function(resolve, reject) {
+                fs.readFile(file, 'utf-8', function(err, data) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        file = file.replace(dirPath, '').replace(extname, '');
+                        cache[file] = data;
+                        resolve(0);
+                    }
+                });
+            });
+        });
+        return Promise.all(partialPromises);
+    });
+
+    return globPromoise;
+};
+
+/**
+* @function ContextParserHandlebars.getPartialsTemplates
+*/
+ContextParserHandlebars.prototype.getPartialsTemplates = function(partialName) {
+    return this._partialCache[partialName];
 };
 
 /* exposing it */

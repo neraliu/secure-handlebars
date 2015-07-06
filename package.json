@@ -42,8 +42,12 @@
   },
   "dependencies": {
     "context-parser": "^2.0.0",
+    "glob": "^5.0.13",
     "handlebars": "^3.0.3",
     "html-decoder": "^1.0.2",
+    "minimist": "^1.1.1",
+    "path": "^0.11.14",
+    "promise": "^7.0.3",
     "xss-filters": "^1.2.2"
   },
   "devDependencies": {

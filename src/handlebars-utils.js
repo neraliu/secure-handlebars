@@ -332,7 +332,6 @@ HandlebarsUtils.isScriptableTag = function(tag) {
     return HandlebarsUtils.scriptableTags[tag] === 1;
 };
 
-
 module.exports = HandlebarsUtils;
 
 })();

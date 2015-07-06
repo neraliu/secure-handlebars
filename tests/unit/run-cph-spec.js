@@ -407,5 +407,15 @@ Authors: Nera Liu <neraliu@yahoo-inc.com>
                 expect(r.output).to.equal(testObj.output);
             });
         });
+
+        it("context-parser-handlebars#getPartials test", function(done) {
+            var parser = new ContextParserHandlebars(config);
+            var p = parser.getPartials('./tests/samples/files/partials/', '.hbs');
+            p.then(function() {
+                expect(parser._partialsCache['handlebarsjs_template_partial']).to.equal('{{! This file tests for Handlebars partial }}\n{{insidepartial}}\n');
+                expect(parser._partialsCache['handlebarsjs_template_partial.002']).to.equal('');
+                done();
+            });
+        });
     });
 }());
