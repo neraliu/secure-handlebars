@@ -428,8 +428,9 @@ ContextParserHandlebars.prototype.analyzeAst = function(ast, contextParser, char
                                              enablePartialCombine: this._config._enablePartialCombine,
                                              strictMode: this._config._strictMode});
 
-                // clone the state of the current context parser
-                enterState = parser.getLastState();
+                // get the html state number right the parital is called, and analyzed
+                enterState = parser.getCurrentState();
+
                 partialParser.contextParser.cloneStates(parser);
                 partialParser.analyzeContext(partialContent);
                 // propagate the state of the partial parser to current context parser
