@@ -24,9 +24,9 @@ var HtmlDecoder = require("html-decoder");
 
 var filterMap = handlebarsUtils.filterMap;
 
-var fs = require('fs'),
-    glob = require('glob'),
-    Promise = require('promise');
+var Promise = require('bluebird'),
+    fs = Promise.promisifyAll(require("fs")),
+    glob = Promise.promisify(require('glob'));
 
 // extracted from xss-filters
 /*
@@ -92,7 +92,7 @@ function ContextParserHandlebars(config) {
     this.contextParser = parserUtils.getParser();
 
     /* internal file cache */
-    this._partialsCache = Object.create(null);
+    this._partialsCache = config.partialsCache || {};
 }
 
 /**
@@ -954,34 +954,13 @@ ContextParserHandlebars.prototype.getPartials = function(dirPath, extname) {
     var cache = this._partialsCache,
         pattern = dirPath + '*' + extname;
 
-    var globPromoise = new Promise(function (resolve, reject) {
-        glob(pattern, {
-            follow: true
-        }, function (err, files) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(files);
-            }
+    return glob(pattern, {follow: true}).map(function (file) {
+        return Promise.join(fs.readFileAsync(file, "utf8"), function(content) {
+                cache[file.replace(dirPath, '').replace(extname, '')] = content;
         });
-    }).then(function(files) {
-        var partialPromises = files.map(function(file) {
-            return new Promise(function(resolve, reject) {
-                fs.readFile(file, 'utf-8', function(err, data) {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        file = file.replace(dirPath, '').replace(extname, '');
-                        cache[file] = data;
-                        resolve(0);
-                    }
-                });
-            });
-        });
-        return Promise.all(partialPromises);
+    }).catch(function(e) {
+        console.log("Error reading file", e);
     });
-
-    return globPromoise;
 };
 
 /**
