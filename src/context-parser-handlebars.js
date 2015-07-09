@@ -25,7 +25,6 @@ var HtmlDecoder = require("html-decoder");
 var filterMap = handlebarsUtils.filterMap;
 
 var fs = require('fs'),
-    path = require('path'),
     glob = require('glob'),
     Promise = require('promise');
 
