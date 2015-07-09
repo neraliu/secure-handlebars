@@ -164,13 +164,20 @@ ContextParserHandlebars.prototype.saveToBuffer = function(str) {
 * @description
 * Analyze the context of the Handlebars template input string.
 */
-ContextParserHandlebars.prototype.analyzeContext = function(input) {
+ContextParserHandlebars.prototype.analyzeContext = function(input, overrideConfig) {
+    overrideConfig || (overrideConfig = {});
+
     // the last parameter is the hack till we move to LR parser
-    var ast = this.buildAst(input, 0, []);
-    var r = this.analyzeAst(ast, this.contextParser, 0);
-    (this._config._printCharEnable && typeof process === 'object')? process.stdout.write(r.output) : '';
+    var ast = this.buildAst(input, 0, []),
+        r = this.analyzeAst(ast, overrideConfig.contextParser || this.contextParser, 0);
+    
+    if (this._config._printCharEnable && typeof process === 'object') {
+        overrideConfig.disablePrintChar || process.stdout.write(r.output);
+    }
+
     return r.output;
 };
+
 
 /**
 * @function ContextParserHandlebars.buildAst
@@ -389,7 +396,7 @@ ContextParserHandlebars.prototype.analyzeAst = function(ast, contextParser, char
     function consumeAstNode (tree, parser) {
         /*jshint validthis: true */
         var j = 0, len = tree.length, node, 
-            re, partialName, enterState, partialOutput, partialContent;
+            re, partialName, enterState, partialContent;
 
         for (; j < len; j++) {
             node = tree[j];
@@ -423,31 +430,29 @@ ContextParserHandlebars.prototype.analyzeAst = function(ast, contextParser, char
                 (re = handlebarsUtils.isValidExpression(node.content, 0, node.type)) && 
                 (partialContent = this._partialsCache[(partialName = re.tag)])) {
 
-                var partialParser = new ContextParserHandlebars({
-                                             printCharEnable: false,
-                                             enablePartialCombine: this._config._enablePartialCombine,
-                                             strictMode: this._config._strictMode});
-
                 // get the html state number right the parital is called, and analyzed
                 enterState = parser.getCurrentState();
 
-                partialParser.contextParser.cloneStates(parser);
-                partialParser.analyzeContext(partialContent);
-                // propagate the state of the partial parser to current context parser
-                parser.cloneStates(partialParser.contextParser);
+                // while analyzing the partial, use the current parser (possibly forked) and disable printChar
+                partialContent = this.analyzeContext(partialContent, {
+                    contextParser: parser,
+                    disablePrintChar: true
+                });
 
-                partialOutput = partialParser.getOutput();
                 if (this._config._enablePartialCombine) {
-                    output += partialOutput;
+                    output += partialContent;
                 } else {
-                    var partialExpression = node.content,
-                        newPartialName = partialName + "-" + enterState;
+
                     // https://github.com/yahoo/secure-handlebars/blob/master/src/handlebars-utils.js#L76
                     var pattern = /^(\{\{~?>\s*)([^\s!"#%&'\(\)\*\+,\.\/;<=>@\[\\\]\^`\{\|\}\~]+)(.*)/;
-                    output += partialExpression.replace(pattern, function(m, p1, p2, p3) {
-                        return p1 + newPartialName + p3;
+                    
+                    // rewrite the partial name, that is suffixed with the in-state
+                    output += node.content.replace(pattern, function(m, p1, p2, p3) {
+                        return p1 + partialName + "-" + enterState + p3;
                     });
-                    this._partialsCache[newPartialName] = partialOutput;
+
+                    // TODO: put the pre-processed template in a separate cache
+                    // this._partialsCache[newPartialName] = partialOutput;
                 }
 
             } else if (node.type === handlebarsUtils.RAW_BLOCK ||
