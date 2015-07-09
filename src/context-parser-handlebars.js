@@ -388,8 +388,10 @@ ContextParserHandlebars.prototype.analyzeAst = function(ast, contextParser, char
 
     function consumeAstNode (tree, parser) {
         /*jshint validthis: true */
+        var j = 0, len = tree.length, node, 
+            re, partialName, enterState, partialOutput, partialContent;
 
-        for (var j = 0, len = tree.length, node; j < len; j++) {
+        for (; j < len; j++) {
             node = tree[j];
 
             if (node.type === handlebarsUtils.AST_HTML) {
@@ -412,54 +414,43 @@ ContextParserHandlebars.prototype.analyzeAst = function(ast, contextParser, char
 
                 output += t.output;
 
-            } else if (node.type === handlebarsUtils.PARTIAL_EXPRESSION) {
+            } 
+            // if the 'partial expression' is not in Data State,
+            // TODO: we support basic partial only, need to enhance it.
+            // http://handlebarsjs.com/partials.html
+            else if (node.type === handlebarsUtils.PARTIAL_EXPRESSION && 
+                parser.getCurrentState() !== stateMachine.State.STATE_DATA && 
+                (re = handlebarsUtils.isValidExpression(node.content, 0, node.type)) && 
+                (partialContent = this._partialsCache[(partialName = re.tag)])) {
 
-                // if the 'partial expression' is not in Data State,
-                // TODO: we support basic partial only, need to enhance it.
-                // http://handlebarsjs.com/partials.html
+                var partialParser = new ContextParserHandlebars({
+                                             printCharEnable: false,
+                                             enablePartialCombine: this._config._enablePartialCombine,
+                                             strictMode: this._config._strictMode});
 
-                if (parser.getCurrentState() !== stateMachine.State.STATE_DATA) {
-                    var re = handlebarsUtils.isValidExpression(node.content, 0, handlebarsUtils.PARTIAL_EXPRESSION),
-                        partialName, enterState, partialOutput, partialContent;
-                    if (re && this._partialsCache[re.tag]) {
-                        partialName = re.tag;
-                        partialContent = this._partialsCache[partialName];
-                        var partialParser = new ContextParserHandlebars({
-                                                     printCharEnable: false,
-                                                     enablePartialCombine: this._config._enablePartialCombine,
-                                                     strictMode: this._config._strictMode});
+                // clone the state of the current context parser
+                enterState = parser.getLastState();
+                partialParser.contextParser.cloneStates(parser);
+                partialParser.analyzeContext(partialContent);
+                // propagate the state of the partial parser to current context parser
+                parser.cloneStates(partialParser.contextParser);
 
-                        // clone the state of the current context parser
-                        enterState = parser.getLastState();
-                        partialParser.contextParser.cloneStates(parser);
-                        partialParser.analyzeContext(partialContent);
-                        // propagate the state of the partial parser to current context parser
-                        parser.cloneStates(partialParser.contextParser);
-
-                        partialOutput = partialParser.getOutput();
-                        if (this._config._enablePartialCombine) {
-                            output += partialOutput;
-                        } else {
-                            var partialExpression = node.content,
-                                newPartialName = partialName + "-" + enterState;
-                            // https://github.com/yahoo/secure-handlebars/blob/master/src/handlebars-utils.js#L76
-                            var pattern = /^(\{\{~?>\s*)([^\s!"#%&'\(\)\*\+,\.\/;<=>@\[\\\]\^`\{\|\}\~]+)(.*)/;
-                            output += partialExpression.replace(pattern, function(m, p1, p2, p3) {
-                                return p1 + newPartialName + p3;
-                            });
-                            this._partialsCache[newPartialName] = partialOutput;
-                        }
-                    } else {
-                        output += node.content;
-                        msg = (this._config._strictMode? '[ERROR]' : '[WARNING]') + " SecureHandlebars: " + node.content + ' is in non-HTML Context!';
-                        exceptionObj = new ContextParserHandlebarsException(msg, this._lineNo, this._charNo);
-                        handlebarsUtils.handleError(exceptionObj, this._config._strictMode);
-                    }
+                partialOutput = partialParser.getOutput();
+                if (this._config._enablePartialCombine) {
+                    output += partialOutput;
                 } else {
-                    output += node.content;
+                    var partialExpression = node.content,
+                        newPartialName = partialName + "-" + enterState;
+                    // https://github.com/yahoo/secure-handlebars/blob/master/src/handlebars-utils.js#L76
+                    var pattern = /^(\{\{~?>\s*)([^\s!"#%&'\(\)\*\+,\.\/;<=>@\[\\\]\^`\{\|\}\~]+)(.*)/;
+                    output += partialExpression.replace(pattern, function(m, p1, p2, p3) {
+                        return p1 + newPartialName + p3;
+                    });
+                    this._partialsCache[newPartialName] = partialOutput;
                 }
 
             } else if (node.type === handlebarsUtils.RAW_BLOCK ||
+                node.type === handlebarsUtils.PARTIAL_EXPRESSION ||
                 node.type === handlebarsUtils.AMPERSAND_EXPRESSION) {
 
                 // if the 'rawblock', 'partial expression' and 'ampersand expression' are not in Data State, 
