@@ -8,6 +8,7 @@ Authors: Nera Liu <neraliu@yahoo-inc.com>
          Adonis Fung <adon@yahoo-inc.com>
 */
 /*jshint -W030 */
+/*jshint -W083 */
 (function () {
 "use strict";
 
@@ -440,10 +441,13 @@ ContextParserHandlebars.prototype.analyzeAst = function(ast, contextParser, char
                         if (this._config._enablePartialCombine) {
                             output += partialOutput;
                         } else {
-                            var o = node.content,
+                            var partialExpression = node.content,
                                 newPartialName = partialName + "-" + enterState;
-                            o = o.replace(partialName, newPartialName);
-                            output += o;
+                            // https://github.com/yahoo/secure-handlebars/blob/master/src/handlebars-utils.js#L76
+                            var pattern = /^(\{\{~?>\s*)([^\s!"#%&'\(\)\*\+,\.\/;<=>@\[\\\]\^`\{\|\}\~]+)(.*)/;
+                            output += partialExpression.replace(pattern, function(m, p1, p2, p3) {
+                                return p1 + newPartialName + p3;
+                            });
                             this._partialsCache[newPartialName] = partialOutput;
                         }
                     } else {

@@ -341,6 +341,16 @@ var partialExpressionTestPatterns = [
     { syntax: '{{>par\rtial}}     ', type:handlebarsUtils.PARTIAL_EXPRESSION, rstr:'par', result: [ 'PartialStatement', true, 12 ]},
     { syntax: '{{>par\ntial}}     ', type:handlebarsUtils.PARTIAL_EXPRESSION, rstr:'par', result: [ 'PartialStatement', true, 12 ]},
 
+    { syntax: '{{> myPartial myOtherContext }}     ', type:handlebarsUtils.PARTIAL_EXPRESSION, rstr:'myPartial', result: [ 'PartialStatement', true, 30 ]},
+    { syntax: '{{> myPartial parameter=value }}    ', type:handlebarsUtils.PARTIAL_EXPRESSION, rstr:'myPartial', result: [ 'PartialStatement', true, 31 ]},
+    { syntax: '{{> myPartial name=../name }}       ', type:handlebarsUtils.PARTIAL_EXPRESSION, rstr:'myPartial', result: [ 'PartialStatement', true, 28 ]},
+
+    // dynamic partial (it will trigger Parse Error! in the function buildAst, the lookAheadTest and isValidExpression return different result)
+    // it is ok, as we are not supporting dynamic partial yet.
+    // TODO: support dynamic partial
+    { syntax: '{{> (whichPartial) }}       ',          type:handlebarsUtils.PARTIAL_EXPRESSION, rstr:false, result: [ 'PartialStatement', false, 20 ]},
+    { syntax: "{{> (lookup . 'myVariable') }}       ", type:handlebarsUtils.PARTIAL_EXPRESSION, rstr:false, result: [ 'PartialStatement', false, 29 ]},
+
     // invalid syntax
     // the cph test can pass as there is no isValidExpression to guard against
     { syntax: '{{ >partial}}      ', type:handlebarsUtils.PARTIAL_EXPRESSION, rstr:false, result: [ false, false, 12 ]},
