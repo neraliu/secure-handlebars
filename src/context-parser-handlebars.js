@@ -944,26 +944,6 @@ ContextParserHandlebars.prototype.handleRawBlock = function(input, i, saveToBuff
 };
 
 /**
-* @function ContextParserHandlebars.getPartials
-*
-* @description
-* Get all the partials and load into the memory.
-* This function call is inspired by express-handlebars.
-*/
-ContextParserHandlebars.prototype.getPartials = function(dirPath, extname) {
-    var cache = this._partialsCache,
-        pattern = dirPath + '*' + extname;
-
-    return glob(pattern, {follow: true}).map(function (file) {
-        return Promise.join(fs.readFileAsync(file, "utf8"), function(content) {
-                cache[file.replace(dirPath, '').replace(extname, '')] = content;
-        });
-    }).catch(function(e) {
-        console.log("Error reading file", e);
-    });
-};
-
-/**
 * @function ContextParserHandlebars.getPartialsTemplates
 */
 ContextParserHandlebars.prototype.getPartialsTemplates = function(partialName) {
