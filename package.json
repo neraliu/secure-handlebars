@@ -38,7 +38,7 @@
     "bluebird": "^2.9.30",
     "context-parser": "^2.0.1",
     "glob": "^5.0.13",
-    "handlebars": "^3.0.3",
+    "handlebars": "^4.0.0",
     "html-decoder": "^1.0.2",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
