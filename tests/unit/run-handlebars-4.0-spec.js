@@ -14,7 +14,7 @@ Authors: Nera Liu <neraliu@yahoo-inc.com>
         testPatterns = require('../test-patterns.js'),
         handlebars = require('handlebars');
 
-    describe("Handlebars 3.0 Parsing Test Suite", function() {
+    describe("Handlebars 4.0 Parsing Test Suite", function() {
 
 	console.log(handlebars)
 

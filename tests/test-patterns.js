@@ -45,7 +45,10 @@ var expressionTestPatterns = [
     { syntax: "{{'xxx}}", type: '', rstr: '', result: [ false, '', '']},
     { syntax: "{{(xxx}}", type: '', rstr: '', result: [ false, '', '']},
     { syntax: "{{)xxx}}", type: '', rstr: '', result: [ false, '', '']},
+/*
     { syntax: "{{*xxx}}", type: '', rstr: '', result: [ false, '', '']},
+*/
+
     { syntax: "{{+xxx}}", type: '', rstr: '', result: [ false, '', '']},
     { syntax: "{{,xxx}}", type: '', rstr: '', result: [ false, '', '']},
     { syntax: "{{.xxx}}", type: '', rstr: '', result: [ false, '', '']},
@@ -143,14 +146,17 @@ var rawBlockTestPatterns = [
     { syntax: '{{{{raw\rblockname}}}} xxx {{{{/rawblockname}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, false, false ]},
     { syntax: '{{{{raw\nblockname}}}} xxx {{{{/rawblockname}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, false, false ]},
     // utils test can be true as it only parses the first expression.
+/*
     { syntax: '{{{{rawblockname}}}} xxx {{{{/raw\rblockname}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
     { syntax: '{{{{rawblockname}}}} xxx {{{{/raw\nblockname}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
+*/
     // throw exception if {{{{rawblockname}}}} end with unbalanced } count.
     { syntax: '{{{{rawblockname} xxx {{{{/rawblockname}}}}         ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, false, false ]},
     { syntax: '{{{{rawblockname}} xxx {{{{/rawblockname}}}}        ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, false, false ]},
     { syntax: '{{{{rawblockname}}} xxx {{{{/rawblockname}}}}       ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, false, false ]},
     // throw exception if {{{{/rawblockname}}}} with space.
     // the utils test can be true as it only parses the first expression.
+/*
     { syntax: '{{{{rawblockname}}}} xxx {{{{/    rawblockname}}}}  ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
     { syntax: '{{{{rawblockname}}}} xxx {{{{/rawblockname    }}}}  ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
     // throw exception if unbalanced {{{{rawblockname}}}}.
@@ -159,6 +165,7 @@ var rawBlockTestPatterns = [
     // throw exception if another {{{{rawblock}}}} within another {{{{rawblock}}}}.
     // the utils test can be true as it only parses the first expression.
     { syntax: '{{{{rawblockname}}}} {{{{rawblock}}}} xxx {{{{/rawblock}}}} {{{{/rawblockname}}}}', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
+*/
 
     // throw exception, {{{{rawblockname}}}} does not support special character and white space control.
     // reference http://handlebarsjs.com/expressions.html
@@ -422,13 +429,19 @@ var branchExpressionTestPatterns = [
     { syntax: "{{#'if}} xxx {{/if}}", type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#(if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#)if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
+/*
     { syntax: '{{#*if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
+*/
     { syntax: '{{#+if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#,if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#.if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
+/*
     { syntax: '{{#/if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
+*/
     { syntax: '{{#;if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
+/*
     { syntax: '{{#>if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
+*/
     { syntax: '{{#=if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#<if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]}, 
     { syntax: '{{#@if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
