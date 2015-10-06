@@ -9,10 +9,10 @@ var handlebarsUtils = require('../src/handlebars-utils'),
     cssParser = require('../src/css-parser/css-parser'),
     cssParserUtils = require('../src/css-utils');
 
-// for handlebars-3.0-spec test only
+// for handlebars-3.0-spec and handlebars-4.0-spec test only
 var expressionTestPatterns = [
 
-    // NOTE: result[0]: it is being used in run-handlebars-3.0-spec.js for the AST object type from Handlebars 3.0
+    // NOTE: result[0]: it is being used in run-handlebars-3.0/4.0-spec.js for the AST object type from Handlebars 3.0/4.0
     //       result[1]: it is being used in run-utils-spec.js for isValidExpression test.
     //       result[2]: it is being used in run-cph-spec.js for consumeExpression test.
     //       Empty string represents not being used in the unit tests testing.
@@ -45,9 +45,8 @@ var expressionTestPatterns = [
     { syntax: "{{'xxx}}", type: '', rstr: '', result: [ false, '', '']},
     { syntax: "{{(xxx}}", type: '', rstr: '', result: [ false, '', '']},
     { syntax: "{{)xxx}}", type: '', rstr: '', result: [ false, '', '']},
-/*
-    { syntax: "{{*xxx}}", type: '', rstr: '', result: [ false, '', '']},
-*/
+// handlebars-4.0: Decorator returns 
+// { syntax: "{{*xxx}}", type: '', rstr: '', result: [ 'Decorator', '', '']},
 
     { syntax: "{{+xxx}}", type: '', rstr: '', result: [ false, '', '']},
     { syntax: "{{,xxx}}", type: '', rstr: '', result: [ false, '', '']},
@@ -146,26 +145,27 @@ var rawBlockTestPatterns = [
     { syntax: '{{{{raw\rblockname}}}} xxx {{{{/rawblockname}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, false, false ]},
     { syntax: '{{{{raw\nblockname}}}} xxx {{{{/rawblockname}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, false, false ]},
     // utils test can be true as it only parses the first expression.
-/*
-    { syntax: '{{{{rawblockname}}}} xxx {{{{/raw\rblockname}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
-    { syntax: '{{{{rawblockname}}}} xxx {{{{/raw\nblockname}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
-*/
+// handlebars-4.0: this pattern will hang the parser.
+// { syntax: '{{{{rawblockname}}}} xxx {{{{/raw\rblockname}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
+// handlebars-4.0: this pattern will hang the parser.
+// { syntax: '{{{{rawblockname}}}} xxx {{{{/raw\nblockname}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
     // throw exception if {{{{rawblockname}}}} end with unbalanced } count.
     { syntax: '{{{{rawblockname} xxx {{{{/rawblockname}}}}         ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, false, false ]},
     { syntax: '{{{{rawblockname}} xxx {{{{/rawblockname}}}}        ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, false, false ]},
     { syntax: '{{{{rawblockname}}} xxx {{{{/rawblockname}}}}       ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, false, false ]},
     // throw exception if {{{{/rawblockname}}}} with space.
     // the utils test can be true as it only parses the first expression.
-/*
-    { syntax: '{{{{rawblockname}}}} xxx {{{{/    rawblockname}}}}  ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
-    { syntax: '{{{{rawblockname}}}} xxx {{{{/rawblockname    }}}}  ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
+// handlebars-4.0: this pattern will hang the parser.
+// { syntax: '{{{{rawblockname}}}} xxx {{{{/    rawblockname}}}}  ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
+// handlebars-4.0: this pattern will hang the parser.
+// { syntax: '{{{{rawblockname}}}} xxx {{{{/rawblockname    }}}}  ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
     // throw exception if unbalanced {{{{rawblockname}}}}.
     // the utils test can be true as it only parses the first expression.
     { syntax: '{{{{rawblockname1}}}} xxx {{{{/rawblockname2}}}}    ', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
     // throw exception if another {{{{rawblock}}}} within another {{{{rawblock}}}}.
     // the utils test can be true as it only parses the first expression.
-    { syntax: '{{{{rawblockname}}}} {{{{rawblock}}}} xxx {{{{/rawblock}}}} {{{{/rawblockname}}}}', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
-*/
+// handlebars-4.0: it is a valid pattern in handlebars-4.0
+// { syntax: '{{{{rawblockname}}}} {{{{rawblock}}}} xxx {{{{/rawblock}}}} {{{{/rawblockname}}}}', type:handlebarsUtils.RAW_BLOCK, rstr:false, result: [ false, true, false ]},
 
     // throw exception, {{{{rawblockname}}}} does not support special character and white space control.
     // reference http://handlebarsjs.com/expressions.html
@@ -429,19 +429,16 @@ var branchExpressionTestPatterns = [
     { syntax: "{{#'if}} xxx {{/if}}", type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#(if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#)if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
-/*
-    { syntax: '{{#*if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
-*/
+// handlebars-4.0: DecoratorBlock returns
+// { syntax: '{{#*if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#+if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#,if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#.if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
-/*
     { syntax: '{{#/if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
-*/
     { syntax: '{{#;if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
-/*
-    { syntax: '{{#>if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
-*/
+// handlebars-4.0: PartialBlockStatement returns
+// { syntax: '{{#>if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
+
     { syntax: '{{#=if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},
     { syntax: '{{#<if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]}, 
     { syntax: '{{#@if}} xxx {{/if}}', type:handlebarsUtils.BRANCH_EXPRESSION, rstr:false, result: [ false, false, false ]},

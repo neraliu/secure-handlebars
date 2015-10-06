@@ -56,6 +56,7 @@ Authors: Nera Liu <neraliu@yahoo-inc.com>
                 var ast;
                 try {
                     ast = handlebars.parse(testObj.syntax);
+console.log(ast);
                     expect(ast.body).to.be.ok;
                     expect(testObj.result[0]).to.equal(ast.body[0].type);
                 } catch (e) {
